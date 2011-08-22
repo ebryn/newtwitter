@@ -1,0 +1,19 @@
+{
+  "name": "newtwitter",
+  "bpm": "1.0.0",
+  "bpm:build": {
+    "bpm_libs.js": {
+      "directories": [
+        "lib", "app"
+      ]
+    },
+    "bpm_styles.css": {
+      "directories": [
+        "css"
+      ]
+    }
+  },
+  "dependencies": {
+    "sproutcore": ">= 0"
+  }
+}

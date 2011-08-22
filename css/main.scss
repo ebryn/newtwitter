@@ -1,0 +1,115 @@
+body {
+  background: #C0DEED;
+  margin-top: 10px;
+}
+
+ul.tabs {
+  padding: 0 10px;
+  margin-bottom: 0;
+
+  li.active a {
+    color: black;
+    font-weight: bold;
+  }
+}
+
+#timeline-container {
+  background: #f5f5f5;
+  width: 540px;
+  overflow: hidden;
+}
+.tab-content {
+  background: white;
+  width: 540px;
+  float: left;
+  border-right: 1px solid #ccc;
+}
+#new-tweet {
+  padding: 20px;
+
+  textarea {
+    width: 100%;
+  }
+}
+#right-bar {
+  margin-top: 10px;
+  float: left;
+  margin-left: 20px;
+  position: relative;
+}
+
+#details {
+  position: fixed;
+  z-index: 1;
+  top: 60px;
+  padding: 10px 0;
+  width: 300px;
+  height: 800px;
+  background: white;
+}
+
+#details-header {
+  padding: 5px;
+  margin-bottom: 10px;
+  background: #F4F4F4;
+  text-align: right;
+}
+
+.tweet {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.tweet:hover {
+  background: rgba(0, 132, 180, 0.1);
+}
+
+.tweet-icon {
+  float: left;
+  margin-right: 10px;
+}
+.tweet-container {
+  margin-left: 60px;
+}
+.tweet-body {
+  padding: 4px 0;
+}
+
+.tweet-author {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.tweet-author-name {
+  font-weight: normal;
+  font-size: 13px;
+  color: grey;
+}
+
+.tweet-time {
+  color: grey;
+  font-size: 11px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: normal;
+}
+h3 span {
+  font-size: 13px;
+  color: blue;
+  font-weight: bold;
+}
+#your_tweets {
+  width: 300px;
+}
+
+#following, #followers {
+  margin-top: 30px;
+  width: 150px;
+  float: left;
+}
+
+a.sc-button { cursor: pointer; }
+
