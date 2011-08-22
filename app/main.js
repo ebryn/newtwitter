@@ -11,6 +11,7 @@ var NewTwitter = SC.Application.create({
 NewTwitter.appController = SC.Object.create({
   selectedTab: "timeline",
   authorized: false,
+  authUrl: null,
   userName: null,
 
   changeTab: function(tabName) {
@@ -35,23 +36,29 @@ NewTwitter.appController = SC.Object.create({
           NewTwitter.appController.set('authorized', true);
           $('#container').show();
         });
-      } else if (showPopup === true) {
-        NewTwitter.authWindow = window.open(data.authentication.authentication_uri, 'twitter_auth_window');
-        if (!NewTwitter.authWindow) {
-          alert('Please turn off your popup blocker...');
-        } else {
-          if (NewTwitter.authPoller) { clearInterval(NewTwitter.authPoller); }
-          NewTwitter.authPoller = setInterval(function() {
-            NewTwitter.appController.auth();
-          }, 1000);
-        }
+      } else {
+        self.set('authUrl', data.authentication.authentication_uri);
       }
     });
   },
 
+  authClick: function() {
+    NewTwitter.authWindow = window.open(this.get('authUrl'), 'twitter_auth_window');
+    if (!NewTwitter.authWindow) {
+      alert('Please turn off your popup blocker...');
+    } else {
+      if (NewTwitter.authPoller) { clearInterval(NewTwitter.authPoller); }
+      NewTwitter.authPoller = setInterval(function() {
+        NewTwitter.appController.auth();
+      }, 1000);
+    }
+  },
+
   deauth: function() {
+    var self = this;
     $.ajax("/_strobe/social/twitter/authentication", {type: "DELETE", complete: function(xhr, stat) {
-      NewTwitter.appController.set('authorized', false);
+      self.set('authorized', false);
+      self.set('authUrl', null);
       $('#container').hide();
     }});
   }
@@ -72,64 +79,65 @@ NewTwitter.Tweet = SC.Object.extend({
   }.property('screenName'),
   linkedBody: function() {
     var body = this.get('body');
-    return body.replace(/@(\w+)/g, "<a href='#$1'>@$1</a>");
-  }.property('body')
+    //return body.replace(/@(\w+)/g, "<a href='#$1'>@$1</a>");
+    return body;
+  }.property('body'),
+
 });
-
-NewTwitter.timelineController = SC.ArrayProxy.create({
-  content: [],
-  loaded: false,
-
-  load: function() {
-    var self = this;
-    $.getJSON("/_strobe/social/twitter/1/statuses/home_timeline.json?count=30", function(data) {
-      NewTwitter.timelineController.loadTweets(data);
-      self.set('loaded', true);
-    });
-    $.getJSON("/_strobe/social/twitter/1/friends/ids.json?include_entities=true", function(data) {
-      NewTwitter.userController.loadFriends(data);
-    });
-    $.getJSON("/_strobe/social/twitter/1/followers/ids.json?include_entities=true", function(data, stat, xhr) {
-      NewTwitter.userController.loadFollowers(data);
-    });
-  },
-
-  loadTweets: function(tweets) {
-    this.set('content', []);
-    var self = this;
-    tweets.forEach(function(data) {
-      var tweet = NewTwitter.Tweet.create({
-        body: data.text, screenName: data.user.screen_name, name: data.user.name,
-        time: data.created_at, profileImage: data.user.profile_image_url
-      });
-      self.pushObject(tweet);
+NewTwitter.Tweet.reopenClass({
+  createFromApi: function(data) {
+    return NewTwitter.Tweet.create({
+      body: data.text, screenName: data.user.screen_name, name: data.user.name,
+      time: data.created_at, profileImage: data.user.profile_image_url
     });
   }
 });
 
-NewTwitter.mentionsController = SC.ArrayProxy.create({
+NewTwitter.TweetStreamController = SC.ArrayProxy.extend({
   content: [],
   loaded: false,
+  dataUrl: null,
 
   load: function() {
     var self = this;
-    $.getJSON("/_strobe/social/twitter/1/statuses/mentions.json", function(data) {
-      NewTwitter.mentionsController.loadTweets(data);
-      self.set('loaded', true);
-    });
-  },
 
-  loadTweets: function(tweets) {
-    this.set('content', []);
-    var self = this;
-    tweets.forEach(function(data) {
-      var tweet = NewTwitter.Tweet.create({
-        body: data.text, screenName: data.user.screen_name, name: data.user.name,
-        time: data.created_at, profileImage: data.user.profile_image_url
+    if (this.get("loaded")) {
+      // do something intelligent to load new tweets
+    } else {
+      $.getJSON(this.get("dataUrl"), function(data) {
+        self.loadTweets(data);
+        self.set('loaded', true);
       });
-      self.pushObject(tweet);
+    }
+  },
+  loadTweets: function(tweets) {
+    var self = this;
+
+    this.set('content', []);
+    tweets.forEach(function(data) {
+      self.pushObject(NewTwitter.Tweet.createFromApi(data));
     });
   }
+});
+
+NewTwitter.timelineController = NewTwitter.TweetStreamController.create({
+  dataUrl: "/_strobe/social/twitter/1/statuses/home_timeline.json?count=30"
+});
+
+NewTwitter.mentionsController = NewTwitter.TweetStreamController.create({
+  dataUrl: "/_strobe/social/twitter/1/statuses/mentions.json"
+});
+
+NewTwitter.retweetedByMeController = NewTwitter.TweetStreamController.create({
+  dataUrl: "/_strobe/social/twitter/1/statuses/retweeted_by_me.json"
+});
+
+NewTwitter.retweetedToMeController = NewTwitter.TweetStreamController.create({
+  dataUrl: "/_strobe/social/twitter/1/statuses/retweeted_to_me.json"
+});
+
+NewTwitter.retweetsOfMeController = NewTwitter.TweetStreamController.create({
+  dataUrl: "/_strobe/social/twitter/1/statuses/retweets_of_me.json"
 });
 
 NewTwitter.userController = SC.Object.create({
@@ -144,10 +152,12 @@ NewTwitter.userController = SC.Object.create({
     this.set('followersCount', data.followers_count);
     this.set('followingCount', data.friends_count);
     this.set('tweetCount', data.statuses_count);
-    this.set('lastTweet', NewTwitter.Tweet.create({
-      body: data.status.text, screenName: data.screen_name, name: data.name,
-      time: data.status.created_at, profileImage: data.profile_image_url
-    }));
+    if (data.status) {
+      this.set('lastTweet', NewTwitter.Tweet.create({
+        body: data.status.text, screenName: data.screen_name, name: data.name,
+        time: data.status.created_at, profileImage: data.profile_image_url
+      }));
+    }
   },
 
   loadFriends: function(data) {
@@ -169,6 +179,10 @@ NewTwitter.userController = SC.Object.create({
       });
     });
 
+  },
+
+  incrementTweetCount: function() {
+    this.set('tweetCount', this.get('tweetCount') + 1);
   }
 });
 
@@ -176,13 +190,19 @@ NewTwitter.tweetController = SC.Object.create({
   content: null
 });
 
+NewTwitter.TweetView = SC.View.extend({
+  templateName: 'tweet',
+  classNames: ['tweet'],
+  click: function() {
+    //NewTwitter.tweetController.set('content', this.get('content'));
+  }
+});
+
 NewTwitter.TweetStream = SC.CollectionView.extend({
   tagName: "div",
-  itemViewClass: SC.View.extend({
-    classNames: ['tweet'],
-    click: function() {
-      NewTwitter.tweetController.set('content', this.get('content'));
-    }
+  itemViewClass: NewTwitter.TweetView,
+  emptyView: SC.View.extend({
+    template: SC.Handlebars.compile("<div class='tweet'><em>Damn, you need some friends bro!</em></div>")
   })
 });
 
@@ -255,6 +275,11 @@ NewTwitter.TweetForm = SC.View.extend({
     var self = this;
     $.post("/_strobe/social/twitter/1/statuses/update.json", {status: this.getPath('textArea.value')}, function(data) {
       self.setPath("textArea.value", "");
+      NewTwitter.userController.set("lastTweet", NewTwitter.Tweet.create({
+        body: data.text, screenName: data.screen_name, name: data.name,
+        time: data.created_at, profileImage: data.profile_image_url
+      }));
+      NewTwitter.userController.incrementTweetCount();
       NewTwitter.timelineController.load();
     });
 

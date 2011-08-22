@@ -5,7 +5,17 @@
     <title>SC2 NewTwitter</title>
 
     <script type="text/html" data-template-name="tweet">
-
+      <div class="tweet-icon">
+        <img width="48" {{bindAttr src="content.profileImage"}}>
+      </div>
+      <div class="tweet-container">
+        <div class="tweet-author">
+          <a {{bindAttr href="content.screenNameHash"}}>{{content.screenName}}</a>
+          <span class="tweet-author-name">{{content.name}}</span>
+        </div>
+        <div class="tweet-body">{{{content.linkedBody}}}</div>
+        <span class="tweet-time">{{content.humanTime}}</span>
+      </div>
     </script>
   </head>
   <body>
@@ -34,7 +44,7 @@
           <div class="span12 offset2 columns">
             <div id="auth-message" class="alert-message block-message error">
               <p><strong>Please authorize us to use your Twitter account</strong></p>
-              <p><button class="btn" onclick="NewTwitter.appController.auth(true)">Authorize</button></p>
+              <p><button class="btn" onclick="NewTwitter.appController.authClick()">Authorize</button></p>
             </div>
           </div>
         </div>
@@ -56,40 +66,36 @@
             <ul id="timeline_tabs" class="tabs">
               {{#view NewTwitter.TabItem tabName="timeline"}}<a href="#">Timeline</a>{{/view}}
               {{#view NewTwitter.TabItem tabName="mentions"}}<a href="#">@Mentions</a>{{/view}}
+              {{#view NewTwitter.TabItem tabName="retweetedByMe"}}<a href="#">Retweeted by me</a>{{/view}}
+              {{#view NewTwitter.TabItem tabName="retweetedToMe"}}<a href="#">Retweeted to me</a>{{/view}}
+              <!--
+              {{#view NewTwitter.TabItem tabName="retweetsOfMe"}}<a href="#">Retweets of me</a>{{/view}}
+              -->
             </ul>
           </script>
           <div id="timeline" class="tab-content">
             <script type="text/html">
-              {{#collection NewTwitter.TweetStream contentBinding="NewTwitter.timelineController"}}
-                <div class="tweet-icon">
-                  <img width="48" {{bindAttr src="content.profileImage"}}>
-                </div>
-                <div class="tweet-container">
-                  <div class="tweet-author">
-                    <a {{bindAttr href="content.screenNameHash"}}>{{content.screenName}}</a>
-                    <span class="tweet-author-name">{{content.name}}</span>
-                  </div>
-                  <div class="tweet-body">{{{content.linkedBody}}}</div>
-                  <span class="tweet-time">{{content.humanTime}}</span>
-                </div>
-              {{/collection}}
+              {{collection NewTwitter.TweetStream contentBinding="NewTwitter.timelineController"}}
             </script>
           </div>
           <div id="mentions" class="tab-content" style="display: none">
             <script type="text/html">
-              {{#collection NewTwitter.TweetStream contentBinding="NewTwitter.mentionsController"}}
-                <div class="tweet-icon">
-                  <img width="48" {{bindAttr src="content.profileImage"}}>
-                </div>
-                <div class="tweet-container">
-                  <div class="tweet-author">
-                    <a {{bindAttr href="content.screenNameHash"}}>{{content.screenName}}</a>
-                    <span class="tweet-author-name">{{content.name}}</span>
-                  </div>
-                  <div class="tweet-body">{{{content.linkedBody}}}</div>
-                  <span class="tweet-time">{{content.humanTime}}</span>
-                </div>
-              {{/collection}}
+              {{collection NewTwitter.TweetStream contentBinding="NewTwitter.mentionsController"}}
+            </script>
+          </div>
+          <div id="retweetedByMe" class="tab-content" style="display: none">
+            <script type="text/html">
+              {{collection NewTwitter.TweetStream contentBinding="NewTwitter.retweetedByMeController"}}
+            </script>
+          </div>
+          <div id="retweetedToMe" class="tab-content" style="display: none">
+            <script type="text/html">
+              {{collection NewTwitter.TweetStream contentBinding="NewTwitter.retweetedToMeController"}}
+            </script>
+          </div>
+          <div id="retweetsOfMe" class="tab-content" style="display: none">
+            <script type="text/html">
+              {{collection NewTwitter.TweetStream contentBinding="NewTwitter.retweetsOfMeController"}}
             </script>
           </div>
         </div>
