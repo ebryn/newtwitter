@@ -16,20 +16,17 @@ NewTwitter.appController = SC.Object.create({
   changeTab: function(tabName) {
     var oldTabName = this.get('selectedTab');
     this.set('selectedTab', tabName);
-    console.log("hiding " + oldTabName + ", showing " + tabName);
     $('#'+oldTabName).hide();
     $('#'+tabName).show();
   },
 
   currentView: function() {
-    console.log('currentView observer fired');
     NewTwitter[this.get('selectedTab') + 'Controller'].load();
   }.observes('selectedTab', 'authorized'),
 
   auth: function(showPopup) {
     var self = this;
     $.getJSON("/_strobe/social/twitter/authentication", {oauth_callback: location.origin + "/_strobe/social/twitter/callback"}, function(data) {
-      console.log(data);
       if (data.authentication.status === "authenticated") {
         clearInterval(NewTwitter.authPoller);
         $.getJSON("/_strobe/social/twitter/1/account/verify_credentials.json", function(data) {
@@ -256,7 +253,6 @@ NewTwitter.TweetForm = SC.View.extend({
 
   submit: function(event) {
     var self = this;
-    console.log('submit event: ' + event);
     $.post("/_strobe/social/twitter/1/statuses/update.json", {status: this.getPath('textArea.value')}, function(data) {
       self.setPath("textArea.value", "");
       NewTwitter.timelineController.load();
