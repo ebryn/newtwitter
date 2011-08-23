@@ -107,7 +107,6 @@ NewTwitter.Tweet = SC.Object.extend({
 
 NewTwitter.Tweet.reopenClass({
   createFromApi: function(data) {
-    console.log(data);
     return NewTwitter.Tweet.create({
       id: data.id_str, body: data.text, screenName: data.user.screen_name, name: data.user.name,
       time: data.created_at, profileImage: data.user.profile_image_url,
@@ -117,9 +116,12 @@ NewTwitter.Tweet.reopenClass({
 });
 
 NewTwitter.TweetStreamController = SC.ArrayProxy.extend({
-  content: [],
   loaded: false,
   dataUrl: null,
+
+  init: function() {
+    this.set('content', []);
+  },
 
   load: function() {
     var self = this;
@@ -136,7 +138,6 @@ NewTwitter.TweetStreamController = SC.ArrayProxy.extend({
   loadTweets: function(tweets) {
     var self = this;
 
-    this.set('content', []);
     tweets.forEach(function(data) {
       self.pushObject(NewTwitter.Tweet.createFromApi(data));
     });
@@ -254,12 +255,10 @@ NewTwitter.TweetView = SC.View.extend({
 
 NewTwitter.TweetStream = SC.CollectionView.extend({
   tagName: "div",
-  itemViewClass: NewTwitter.TweetView
-  /*
+  itemViewClass: NewTwitter.TweetView,
   emptyView: SC.View.extend({
-    template: SC.Handlebars.compile("<div class='tweet'><em>Damn, you need some friends bro!</em></div>")
+    template: SC.Handlebars.compile("<div class='tweet'>{{#if collectionView.loaded}}<em>Damn, you need some friends bro!</em>{{else}}Loading...{{/if}}</div>")
   })
-  */
 });
 
 NewTwitter.DetailView = SC.View.extend({
