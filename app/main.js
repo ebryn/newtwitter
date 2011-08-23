@@ -206,7 +206,7 @@ NewTwitter.userController = SC.Object.create({
     var self = this;
     jQuery.getJSON("/_strobe/proxy/api.twitter.com/1/users/lookup.json", {user_id: data.slice(0, 5).join(',')}, function(friends_data) {
       friends_data.forEach(function(friend) {
-        self.get('friends').pushObject(SC.Object.create({image: friend.profile_image_url}));
+        self.get('friends').pushObject(SC.Object.create({image: friend.profile_image_url, screenName: friend.screen_name}));
       });
     });
   },
@@ -216,7 +216,7 @@ NewTwitter.userController = SC.Object.create({
     var self = this;
     jQuery.getJSON("/_strobe/proxy/api.twitter.com/1/users/lookup.json", {user_id: data.slice(0, 5).join(',')}, function(friends_data) {
       friends_data.forEach(function(friend) {
-        self.get('followers').pushObject(SC.Object.create({image: friend.profile_image_url}));
+        self.get('followers').pushObject(SC.Object.create({image: friend.profile_image_url, screenName: friend.screen_name}));
       });
     });
 

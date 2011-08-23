@@ -125,7 +125,7 @@
                 {{#view NewTwitter.FollowingView}}
                   <h3>Following {{count}}</h3>
                   {{#collection contentBinding="NewTwitter.userController.friends" tagName="span" itemTagName="span"}}
-                    <img width="24" {{bindAttr src="content.image"}}>
+                    <img width="24" {{bindAttr src="content.image" alt="content.screenName" title="content.screenName"}}>
                   {{/collection}}
                 {{/view}}
               </script>
@@ -136,7 +136,7 @@
                 {{#view NewTwitter.FollowersView}}
                   <h3>Followers {{count}}</h3>
                   {{#collection contentBinding="NewTwitter.userController.followers" tagName="span" itemTagName="span"}}
-                    <img width="24" {{bindAttr src="content.image"}}>
+                    <img width="24" {{bindAttr src="content.image" alt="content.screenName" title="content.screenName"}}>
                   {{/collection}}
                 {{/view}}
               </script>
