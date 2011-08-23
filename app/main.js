@@ -57,7 +57,7 @@ NewTwitter.appController = SC.Object.create({
     }});
   },
 
-  authorized: function() {
+  setAuthorized: function() {
     this.set('authorized', true);
     $('#container').show();
   }
@@ -167,7 +167,7 @@ NewTwitter.userController = SC.Object.create({
 
     $.getJSON("/_strobe/social/twitter/1/account/verify_credentials.json", function(data) {
       NewTwitter.userController.loadUser(data);
-      NewTwitter.appController.authorized();
+      NewTwitter.appController.setAuthorized();
     });
     $.getJSON("/_strobe/social/twitter/1/followers/ids.json", function(data) {
       self.loadFollowers(data);
