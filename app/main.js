@@ -71,27 +71,16 @@ NewTwitter.Tweet = SC.Object.extend({
   time: null,
   profileImage: null,
   retweeted: false,
-  retweeted_status_id: null,
+  retweetedStatusId: null,
 
-  humanTime: function() {
-    return jQuery.timeago(this.get('time'));
-  }.property('time'),
-  screenNameHash: function() {
-    return '#' + this.get('screenName');
-  }.property('screenName'),
-  linkedBody: function() {
-    var body = this.get('body');
-    //return body.replace(/@(\w+)/g, "<a href='#$1'>@$1</a>");
-    return body;
-  }.property('body'),
   retweet: function() {
     var self = this;
 
-    $.post((this.get('retweeted') ? "/_strobe/social/twitter/1/statuses/destroy/"+this.get("retweeted_status_id")+".json" :
+    $.post((this.get('retweeted') ? "/_strobe/social/twitter/1/statuses/destroy/"+this.get("retweetedStatusId")+".json" :
                                     "/_strobe/social/twitter/1/statuses/retweet/"+this.get("id")+".json"),
       function(data){
         self.set('retweeted', !self.get('retweeted'));
-        self.set('retweeted_status_id', self.get('retweeted') ? data.id_str : null);
+        self.set('retweetedStatusId', self.get('retweeted') ? data.id_str : null);
       }
     );
   },
@@ -110,7 +99,7 @@ NewTwitter.Tweet.reopenClass({
     return NewTwitter.Tweet.create({
       id: data.id_str, body: data.text, screenName: data.user.screen_name, name: data.user.name,
       time: data.created_at, profileImage: data.user.profile_image_url,
-      retweeted: !!data.current_user_retweet, retweeted_status_id: (data.current_user_retweet ? data.current_user_retweet.id_str : null)
+      retweeted: !!data.current_user_retweet, retweetedStatusId: (data.current_user_retweet ? data.current_user_retweet.id_str : null)
     });
   }
 });
@@ -237,6 +226,18 @@ NewTwitter.TweetView = SC.View.extend({
   classNames: ['tweet'],
   retweetedBinding: "content.retweeted",
   currentUserNameBinding: "NewTwitter.userController.userName",
+
+  screenNameLink: function() {
+    return '#' + this.getPath('content.screenName');
+  }.property('content.screenName').cacheable(),
+  linkedBody: function() {
+    var body = this.getPath('content.body');
+    //return body.replace(/@(\w+)/g, "<a href='#$1'>@$1</a>");
+    return body;
+  }.property('content.body').cacheable(),
+  humanTime: function() {
+    return jQuery.timeago(this.getPath('content.time'));
+  }.property('content.time').cacheable(),
 
   click: function() {
     //NewTwitter.tweetController.set('content', this.get('content'));
