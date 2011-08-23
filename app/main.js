@@ -235,7 +235,7 @@ NewTwitter.TweetView = SC.View.extend({
     return body;
   }.property('content.body').cacheable(),
   humanTime: function() {
-    return jQuery.timeago(this.getPath('content.time'));
+    return jQuery.timeago(this.getPath('content.time') || "")
   }.property('content.time').cacheable(),
 
   click: function() {
@@ -273,7 +273,7 @@ NewTwitter.DetailView = SC.View.extend({
   }
 });
 
-NewTwitter.LastTweetView = SC.View.extend({
+NewTwitter.LastTweetView = NewTwitter.TweetView.extend({
   contentBinding: 'NewTwitter.userController.lastTweet',
   countBinding: 'NewTwitter.userController.tweetCount',
   truncatedBody: function() {
