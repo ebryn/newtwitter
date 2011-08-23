@@ -14,7 +14,16 @@
           <span class="tweet-author-name">{{content.name}}</span>
         </div>
         <div class="tweet-body">{{{content.linkedBody}}}</div>
-        <span class="tweet-time">{{content.humanTime}}</span>
+        <span class="tweet-time">{{content.humanTime}}
+        {{#unless retweeted}}
+          {{#view SC.Button tagName="a" target="contentView" action="retweet"}}Retweet{{/view}}
+        {{else}}
+          {{#view SC.Button tagName="a" target="contentView" action="retweet"}}Undo Retweet{{/view}}
+        {{/unless}}
+        {{#if currentUsersTweet}}
+          {{#view SC.Button tagName="a" target="contentView" action="delete"}}Delete{{/view}}
+        {{/if}}
+        </span>
       </div>
     </script>
   </head>
@@ -159,6 +168,9 @@
         <br style="clear: both">
       </div>
 
+    </div>
+    <div class="row">
+      <p>Hastily written by <a href="http://github.com/ebryn">Erik Bryn</a>.</p>
     </div>
     <script type="text/javascript" src="assets/bpm_libs.js"></script>
     <script src="http://timeago.yarp.com/jquery.timeago.js"></script>

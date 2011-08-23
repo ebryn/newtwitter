@@ -12,7 +12,6 @@ NewTwitter.appController = SC.Object.create({
   selectedTab: "timeline",
   authorized: false,
   authUrl: null,
-  userName: null,
 
   changeTab: function(tabName) {
     var oldTabName = this.get('selectedTab');
@@ -30,12 +29,7 @@ NewTwitter.appController = SC.Object.create({
     $.getJSON("/_strobe/social/twitter/authentication", {oauth_callback: location.origin + "/_strobe/social/twitter/callback"}, function(data) {
       if (data.authentication.status === "authenticated") {
         clearInterval(NewTwitter.authPoller);
-        $.getJSON("/_strobe/social/twitter/1/account/verify_credentials.json", function(data) {
-          self.set("userName", data.screen_name);
-          NewTwitter.userController.loadUser(data);
-          NewTwitter.appController.set('authorized', true);
-          $('#container').show();
-        });
+        NewTwitter.userController.load();
       } else {
         self.set('authUrl', data.authentication.authentication_uri);
       }
@@ -61,15 +55,23 @@ NewTwitter.appController = SC.Object.create({
       self.set('authUrl', null);
       $('#container').hide();
     }});
+  },
+
+  authorized: function() {
+    this.set('authorized', true);
+    $('#container').show();
   }
 });
 
 NewTwitter.Tweet = SC.Object.extend({
+  id: null,
   body: null,
   screenName: null,
   name: null,
   time: null,
   profileImage: null,
+  retweeted: false,
+  retweeted_status_id: null,
 
   humanTime: function() {
     return jQuery.timeago(this.get('time'));
@@ -82,13 +84,34 @@ NewTwitter.Tweet = SC.Object.extend({
     //return body.replace(/@(\w+)/g, "<a href='#$1'>@$1</a>");
     return body;
   }.property('body'),
+  retweet: function() {
+    var self = this;
+
+    $.post((this.get('retweeted') ? "/_strobe/social/twitter/1/statuses/destroy/"+this.get("retweeted_status_id")+".json" :
+                                    "/_strobe/social/twitter/1/statuses/retweet/"+this.get("id")+".json"),
+      function(data){
+        self.set('retweeted', !self.get('retweeted'));
+        self.set('retweeted_status_id', self.get('retweeted') ? data.id_str : null);
+      }
+    );
+  },
+  delete: function() {
+    var self = this;
+
+    $.post("/_strobe/social/twitter/1/statuses/destroy/"+this.get("id")+".json", function(data) {
+      self.destroy();
+    });
+  }
 
 });
+
 NewTwitter.Tweet.reopenClass({
   createFromApi: function(data) {
+    console.log(data);
     return NewTwitter.Tweet.create({
-      body: data.text, screenName: data.user.screen_name, name: data.user.name,
-      time: data.created_at, profileImage: data.user.profile_image_url
+      id: data.id_str, body: data.text, screenName: data.user.screen_name, name: data.user.name,
+      time: data.created_at, profileImage: data.user.profile_image_url,
+      retweeted: !!data.current_user_retweet, retweeted_status_id: (data.current_user_retweet ? data.current_user_retweet.id_str : null)
     });
   }
 });
@@ -121,26 +144,27 @@ NewTwitter.TweetStreamController = SC.ArrayProxy.extend({
 });
 
 NewTwitter.timelineController = NewTwitter.TweetStreamController.create({
-  dataUrl: "/_strobe/social/twitter/1/statuses/home_timeline.json?count=30"
+  dataUrl: "/_strobe/social/twitter/1/statuses/home_timeline.json?count=30&include_my_retweet=true"
 });
 
 NewTwitter.mentionsController = NewTwitter.TweetStreamController.create({
-  dataUrl: "/_strobe/social/twitter/1/statuses/mentions.json"
+  dataUrl: "/_strobe/social/twitter/1/statuses/mentions.json?include_my_retweet=true"
 });
 
 NewTwitter.retweetedByMeController = NewTwitter.TweetStreamController.create({
-  dataUrl: "/_strobe/social/twitter/1/statuses/retweeted_by_me.json"
+  dataUrl: "/_strobe/social/twitter/1/statuses/retweeted_by_me.json?include_my_retweet=true"
 });
 
 NewTwitter.retweetedToMeController = NewTwitter.TweetStreamController.create({
-  dataUrl: "/_strobe/social/twitter/1/statuses/retweeted_to_me.json"
+  dataUrl: "/_strobe/social/twitter/1/statuses/retweeted_to_me.json?include_my_retweet=true"
 });
 
 NewTwitter.retweetsOfMeController = NewTwitter.TweetStreamController.create({
-  dataUrl: "/_strobe/social/twitter/1/statuses/retweets_of_me.json"
+  dataUrl: "/_strobe/social/twitter/1/statuses/retweets_of_me.json?include_my_retweet=true"
 });
 
 NewTwitter.userController = SC.Object.create({
+  userName: null,
   followersCount: null,
   followingCount: null,
   tweetCount: null,
@@ -148,7 +172,24 @@ NewTwitter.userController = SC.Object.create({
   followers: [],
   lastTweet: null,
 
+  load: function() {
+    var self = this;
+
+    $.getJSON("/_strobe/social/twitter/1/account/verify_credentials.json", function(data) {
+      NewTwitter.appController
+      NewTwitter.userController.loadUser(data);
+      NewTwitter.appController.authorized();
+    });
+    $.getJSON("/_strobe/social/twitter/1/followers/ids.json", function(data) {
+      self.loadFollowers(data);
+    });
+    $.getJSON("/_strobe/social/twitter/1/friends/ids.json", function(data) {
+      self.loadFriends(data);
+    });
+  },
+
   loadUser: function(data) {
+    this.set("userName", data.screen_name);
     this.set('followersCount', data.followers_count);
     this.set('followingCount', data.friends_count);
     this.set('tweetCount', data.statuses_count);
@@ -193,9 +234,22 @@ NewTwitter.tweetController = SC.Object.create({
 NewTwitter.TweetView = SC.View.extend({
   templateName: 'tweet',
   classNames: ['tweet'],
+  retweetedBinding: "content.retweeted",
+  currentUserNameBinding: "NewTwitter.userController.userName",
+
   click: function() {
     //NewTwitter.tweetController.set('content', this.get('content'));
-  }
+  },
+  retweet: function(sender) {
+    this.get('content').retweet();
+  },
+  delete: function(sender) {
+    this.get('content').delete();
+    this.destroy();
+  },
+  currentUsersTweet: function() {
+    return this.getPath('content.screenName') === this.get('currentUserName')
+  }.property('content.screenName', 'currentUserName').cacheable()
 });
 
 NewTwitter.TweetStream = SC.CollectionView.extend({
@@ -274,13 +328,11 @@ NewTwitter.TweetForm = SC.View.extend({
   submit: function(event) {
     var self = this;
     $.post("/_strobe/social/twitter/1/statuses/update.json", {status: this.getPath('textArea.value')}, function(data) {
+      var tweet = NewTwitter.Tweet.createFromApi(data);
       self.setPath("textArea.value", "");
-      NewTwitter.userController.set("lastTweet", NewTwitter.Tweet.create({
-        body: data.text, screenName: data.screen_name, name: data.name,
-        time: data.created_at, profileImage: data.profile_image_url
-      }));
+      NewTwitter.userController.set("lastTweet", tweet);
       NewTwitter.userController.incrementTweetCount();
-      NewTwitter.timelineController.load();
+      NewTwitter.timelineController.unshiftObject(tweet);
     });
 
     return false;

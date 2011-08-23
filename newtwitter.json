@@ -5,7 +5,8 @@
     "bpm_libs.js": {
       "directories": [
         "lib", "app"
-      ]
+      ],
+      "minifier": "uglify-js"
     },
     "bpm_styles.css": {
       "directories": [
