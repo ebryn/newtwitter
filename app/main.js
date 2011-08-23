@@ -166,7 +166,6 @@ NewTwitter.userController = SC.Object.create({
     var self = this;
 
     $.getJSON("/_strobe/social/twitter/1/account/verify_credentials.json", function(data) {
-      NewTwitter.appController
       NewTwitter.userController.loadUser(data);
       NewTwitter.appController.authorized();
     });
