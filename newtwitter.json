@@ -4,7 +4,7 @@
   "bpm:build": {
     "bpm_libs.js": {
       "directories": [
-        "lib", "app"
+        "lib"
       ],
       "minifier": "uglify-js"
     },
@@ -15,6 +15,7 @@
     }
   },
   "dependencies": {
-    "sproutcore": ">= 0"
+    "sproutcore": ">= 0",
+    "spade": ">= 0"
   }
 }
