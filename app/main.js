@@ -254,10 +254,12 @@ NewTwitter.TweetView = SC.View.extend({
 
 NewTwitter.TweetStream = SC.CollectionView.extend({
   tagName: "div",
-  itemViewClass: NewTwitter.TweetView,
+  itemViewClass: NewTwitter.TweetView
+  /*
   emptyView: SC.View.extend({
     template: SC.Handlebars.compile("<div class='tweet'><em>Damn, you need some friends bro!</em></div>")
   })
+  */
 });
 
 NewTwitter.DetailView = SC.View.extend({
