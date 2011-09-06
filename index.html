@@ -30,9 +30,9 @@
     </script>
   </head>
   <body>
-    <div class="topbar-wrapper">
-      <div class="topbar">
-        <div class="container fixed">
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="container">
           <h3><a href="#">SC2 NewTwitter</a></h3>
           <ul>
             <li class="active"><a href="#">Home</a></li>
@@ -77,11 +77,14 @@
             <ul id="timeline_tabs" class="tabs">
               {{#view NewTwitter.TabItem tabName="homeTimeline"}}<a href="#">Timeline</a>{{/view}}
               {{#view NewTwitter.TabItem tabName="mentions"}}<a href="#">@Mentions</a>{{/view}}
-              {{#view NewTwitter.TabItem tabName="retweetedByMe"}}<a href="#">Retweeted by me</a>{{/view}}
-              {{#view NewTwitter.TabItem tabName="retweetedToMe"}}<a href="#">Retweeted to me</a>{{/view}}
-              <!--
-              {{#view NewTwitter.TabItem tabName="retweetsOfMe"}}<a href="#">Retweets of me</a>{{/view}}
-              -->
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle">Retweets</a>
+                <ul class="dropdown-menu">
+                  {{#view NewTwitter.TabItem tabName="retweetedByMe"}} <a href="#">Retweeted by me</a> {{/view}}
+                  {{#view NewTwitter.TabItem tabName="retweetedToMe"}} <a href="#">Retweeted to me</a> {{/view}}
+                  {{#view NewTwitter.TabItem tabName="retweetsOfMe"}}  <a href="#">Retweets of me</a>  {{/view}}
+                </ul>
+              </li>
             </ul>
 
             {{collection NewTwitter.Timeline id="homeTimeline"  contentBinding="NewTwitter.homeTimelineController"}}
@@ -159,6 +162,14 @@
     <script type="text/javascript" src="jquery.timeago.js"></script>
     <script type="text/javascript">
       spade.require('newtwitter'); 
+
+      $("body").bind("click", function (e) {
+        $('.dropdown-toggle, .menu').parent("li").removeClass("open");
+      });
+      $(".dropdown-toggle").live('click', function (e) {
+        var $li = $(this).parent("li").toggleClass('open');
+        return false;
+      });
     </script>
   </body>
 </html>

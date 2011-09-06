@@ -23,6 +23,7 @@ ul.tabs {
   width: 540px;
   float: left;
   border-right: 1px solid #ccc;
+  min-height: 300px; // for dropdown menu
 }
 #new-tweet {
   padding: 20px;
